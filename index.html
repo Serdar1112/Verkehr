@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <title>Verkehrsprobe</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin="" />
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="design.css" />
+
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin-left: 0%;
+            padding: 0%;
+            display: flex;
+        }
+        
+        #map {
+            height: 97%;
+            width: 98%;
+            border-radius: 8px;
+        }
+        
+        .slidecontainer {
+            position: absolute;
+            width: 100%;
+            top: 70%;
+            margin-top: 120px;
+        }
+        
+        .slider {
+            -webkit-appearance: none;
+            width: 45%;
+            height: 10px;
+            border-radius: 5px;
+            background: #d3d3d3;
+            outline: none;
+            opacity: 0.7;
+            -webkit-transition: .2s;
+            transition: opacity .2s;
+        }
+        
+        .slider:hover {
+            opacity: 1;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 23px;
+            height: 24px;
+            border: 0;
+            background: orange;
+            cursor: pointer;
+        }
+        
+        .slider::-moz-range-thumb {
+            width: 23px;
+            height: 24px;
+            border: 0;
+            background: yellow;
+            cursor: pointer;
+        }
+        
+        .element {
+            display: inline-block;
+            margin-left: 3%;
+            margin-right: 8%;
+            margin-top: 5%;
+        }
+        
+        .chart {
+            position: static;
+            justify-content: left;
+            height: 550px;
+            width: 750px;
+        }
+        
+        .banner {
+            width: 100%;
+            height: 100vh;
+            background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(vu.png);
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .head {
+            text-align: left;
+            margin-left: 15px;
+            margin-top: 35px;
+            margin-bottom: 55px;
+        }
+        
+        .p {
+            text-align: right;
+            font-size: 15px;
+            font-weight: 75;
+            color: lightgray;
+            margin-right: 10px;
+        }
+        
+        .head1 {
+            color: darkseagreen;
+        }
+        
+        .head2 {
+            color: lightgray;
+        }
+        
+        .box {
+            position: relative;
+            width: 600px;
+            height: 400px;
+            display: flex;
+            margin-bottom: 220px;
+            margin-left: 5%;
+            margin-top: 40px;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            top: 100px;
+            border-radius: 11px;
+        }
+        .box-minmax{
+        margin-top: 30px;
+        width: 50%;
+        display: flex;
+        justify-content: space-between;
+        font-size: 20px;
+        left:25%;
+        top:5%;
+        color: #FFFFFF;
+        position: absolute;
+        span:first-child{
+            margin-left: 10px;}
+        }
+        div#balken {
+            order: 2;
+            top: 100px;
+            position: absolute;
+            left: 50%;
+        }
+        
+        div#sliders {
+            order: 3;
+            position: relative;
+        }
+        
+        .box::before {
+            content: '';
+            position: absolute;
+            width: 1000px;
+            height: 250%;
+            background: linear-gradient(#00ccff, #d400d4);
+            animation: animate 4s linear infinite;
+        }
+        
+        @keyframes animate {
+            0 {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body class="banner">
+
+    <header>
+        <h1 class="head"><span class="head1">VERKEHR</span><span class="head2">MANNHEIM</span> </p>
+            <p class="p">. . .A GDV PROJECT</p>
+
+
+    </header>
+
+
+    <div class="element">
+        <div class="box">
+            <div id="map"></div>
+        </div>
+    </div>
+    <div class="slidecontainer">
+
+        <input type="range" min="0" max="15" value="8" class="slider" id="carRange">
+
+
+       <p>Verkehrsaufkommen<span id="verkehr"></span></p> <div class="box-minmax">
+                <span>niedriger</span><span>höher</span>
+              </div>
+        <input type="range" min="0" max="15" value="8" class="slider" id="countRange">
+       <p>7-Tages-Inzidenz<span id="fallzahlen"></span></p>
+            
+    </div>
+    <script language="javascript" type="text/javascript" src="slider.js"></script>
+    <script language="javascript" type="text/javascript" src="main.js"></script>
+
+
+
+    
+
+
+
+    <div class="element" id="balken">
+        <div class="chart">
+            <canvas id="mixedChart" width="150" height="100"></canvas>
+
+            <script>
+                let someData = [];
+                let sortedChartData = [];
+                
+                    someData = allDataGlobal;
+                    console.log(someData)
+                    sortedChartData = JSON.parse(JSON.stringify(someData))
+                    SortValuesForChart();
+
+                    function SortValuesForChart() {
+                        for (var i = 0; i < Object.keys(someData).length; i++) {
+                            sortedChartData.sort(function(a, b) {
+                                return a - b
+                            });
+                        }
+                    }
+
+               
+                const ctx = document.getElementById('mixedChart').getContext('2d');
+                const mixedChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Woche vom 25.12.2021', 'Woche vom 18.12.2021', 'Woche vom 11.12.2021', 'Woche vom 04.12.2021', 'Woche vom 27.11.2021', 'Woche vom 20.11.2021', 'Woche vom 13.11.2021', 'Woche vom 06.11.2021', 'Woche vom 30.10.2021', 'Woche vom 23.10.2021', 'Woche vom 16.10.2021', 'Woche vom 09.10.2021', 'Woche vom 02.10.2021', 'Woche vom 25.09.2021', 'Woche vom 18.09.2021', 'Woche vom 11.09.2021'],
+                        datasets: [{
+                            label: 'Verkehrsaufkommen Anzahl Autos',
+                            data: someData,
+                            yAxisID: 'A',
+                            backgroundColor: [
+                                'rgba(255, 20, 86, 0.25)',
+                                'rgba(255, 20, 86, 0.25)',
+                                'rgba(255, 20, 86, 0.25)',
+                                'rgba(255, 20, 86, 0.25)',
+                                'rgba(255, 20, 86, 0.25)',
+                                'rgba(255, 20, 86, 0.25)',
+                                'rgba(255, 20, 86, 0.25)',
+                                'rgba(255, 20, 86, 0.25)',
+                                'rgba(255, 20, 86, 0.25)',
+                                'rgba(255, 20, 86, 0.25)',
+                                'rgba(255, 20, 86, 0.25)',
+                                'rgba(255, 20, 86, 0.25)',
+                                'rgba(255, 20, 86, 0.25)',
+                                'rgba(255, 20, 86, 0.25)',
+                                'rgba(255, 20, 86, 0.25)',
+                                'rgba(255, 20, 86, 0.25)'
+                            ],
+                            borderColor: [
+                                'rgba(255, 20, 86, 1.4)',
+                                'rgba(255, 20, 86, 1.4)',
+                                'rgba(255, 20, 86, 1.4)',
+                                'rgba(255, 20, 86, 1.4)',
+                                'rgba(255, 20, 86, 1.4)',
+                                'rgba(255, 20, 86, 1.4)',
+                                'rgba(255, 20, 86, 1.4)',
+                                'rgba(255, 20, 86, 1.4)',
+                                'rgba(255, 20, 86, 1.4)',
+                                'rgba(255, 20, 86, 1.4)',
+                                'rgba(255, 20, 86, 1.4)',
+                                'rgba(255, 20, 86, 1.4)',
+                                'rgba(255, 20, 86, 1.4)',
+                                'rgba(255, 20, 86, 1.4)',
+                                'rgba(255, 20, 86, 1.4)'
+                            ],
+                            borderWidth: 1.2,
+                            order: 2,
+
+
+                        }, {
+                            type: 'line',
+                            data: inzidenzenMannheim,
+                            label: 'Inzidenz',
+                            yAxisID: 'B',
+                            borderColor: 'rgba(235, 205, 150, 1)',
+                            order: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            A: {
+                                type: 'linear',
+                                position: 'left',
+                                color: 'rgba(211,211,211,0.9)',
+                                title: {
+                                    text: 'Anzahl Autos',
+                                    display: true,
+                                    color: 'rgba(211,211,211,0.9)'
+                                },
+                                min: 100000,
+                                max: 140000
+                            },
+                            B: {
+                                type: 'linear',
+                                position: 'right',
+                                title: {
+                                    text: 'Inzidenz',
+                                    display: true,
+                                    color: 'rgba(211,211,211,0.9)'
+
+                                }
+
+                            }
+                        }
+                    }
+                });
+               
+                var saveValue = -1;
+                var saveColor = '';
+                sliderCar.onchange = function() {
+                    if (saveValue != -1) mixedChart.data.datasets[0].backgroundColor[saveValue] = saveColor;
+
+                    saveColor = mixedChart.data.datasets[0].backgroundColor[someData.indexOf(sortedChartData[sliderCar.value])];
+                    mixedChart.data.datasets[0].backgroundColor[someData.indexOf(sortedChartData[sliderCar.value])] = 'rgba(255, 255, 255, 0.7)';
+                    mixedChart.update();
+                    saveValue = someData.indexOf(sortedChartData[sliderCar.value]);
+                    updateCircles();
+
+                }
+                sliderCorona.onchange = function() {
+                    if (saveValue != -1) mixedChart.data.datasets[0].backgroundColor[saveValue] = saveColor;
+
+                    saveColor = mixedChart.data.datasets[0].backgroundColor[someData.indexOf(sortedChartData[sliderCar.value])];
+                    mixedChart.data.datasets[0].backgroundColor[someData.indexOf(sortedChartData[sliderCar.value])] = 'rgba(255, 255, 255, 0.7)';
+                    mixedChart.update();
+                    saveValue = someData.indexOf(sortedChartData[sliderCar.value]);
+                }
+
+                function updateCircles() {
+                    dataForCircles = [];
+
+                    for (var i = 0; i < Object.keys(circle).length; i++) {
+                        dataForCircles[i] = cameraData[i][saveValue];
+                    }
+                    sortedCircles = JSON.parse(JSON.stringify(dataForCircles))
+                    SortForCircles();
+
+                    function SortForCircles() {
+                        for (var i = 0; i < Object.keys(dataForCircles).length; i++) {
+                            sortedCircles.sort(function(a, b) {
+                                return a - b
+                            });
+                        }
+                    }
+
+                    for (var i = 0; i < Object.keys(dataForCircles).length; i++) {
+                        circle[i].setStyle({
+                            color: colors[sortedCircles.indexOf(dataForCircles[i])],
+                            opacity: 0.7,
+                            fillColor: colors[sortedCircles.indexOf(dataForCircles[i])],
+                            fillOpacity: 0.7,
+                            radius: 70
+                        });
+
+                        circle[i].bindPopup("Kamera: " + deviceId[i] + "<br>Verkehrsaufkommen für die Woche: " + dataForCircles[i]);
+                    }
+                }
+            </script>
+        </div>
+    </div>
+
+
+
+
+
+
+
+</body>
+
+</html>
